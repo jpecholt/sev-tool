@@ -85,14 +85,14 @@ int sev::get_ask_ark(const std::string output_folder, const std::string cert_fil
     std::string output = "";
     ePSP_DEVICE_TYPE device_type = PSP_DEVICE_TYPE_INVALID;
     std::string cert_w_path = "";
-    std::string to_cert_w_path = output_folder + cert_file;
 
     do {
         cmd += "-P " + output_folder + " ";
-        cert_w_path = output_folder;
+        cmd += "-O " + cert_file + " ";
+        cert_w_path = output_folder + cert_file;
 
         // Don't re-download the CEK from the KDS server if you already have it
-        if (sev::get_file_size(to_cert_w_path) != 0) {
+        if (sev::get_file_size(cert_w_path) != 0) {
             // printf("ASK_ARK already exists, not re-downloading\n");
             cmd_ret = SEV_RET_SUCCESS;
             break;
@@ -101,18 +101,15 @@ int sev::get_ask_ark(const std::string output_folder, const std::string cert_fil
         device_type = get_device_type();
         if (device_type == PSP_DEVICE_TYPE_NAPLES) {
             cmd += ASK_ARK_NAPLES_SITE;
-            cert_w_path += ASK_ARK_NAPLES_FILE;
         }
         else if (device_type == PSP_DEVICE_TYPE_ROME) {
             cmd += ASK_ARK_ROME_SITE;
-            cert_w_path += ASK_ARK_ROME_FILE;
         }
         else {
             printf("Error: Unable to determine Platform type. " \
                         "Detected %i\n", (uint32_t)device_type);
             break;
         }
-
         // Download the certificate from the AMD server
         if (!sev::execute_system_command(cmd, &output)) {
             printf("Error: pipe not opened for system command\n");
@@ -124,13 +121,6 @@ int sev::get_ask_ark(const std::string output_folder, const std::string cert_fil
         char tmp_buf[100] = {0};  // Just try to read some amount of chars
         if (sev::read_file(cert_w_path, tmp_buf, sizeof(tmp_buf)) == 0) {
             printf("Error: command to get ask_ark cert failed\n");
-            cmd_ret = SEV_RET_UNSUPPORTED;
-            break;
-        }
-
-        // Rename the file (_PlatformType) to something known (cert_file)
-        if (std::rename(cert_w_path.c_str(), to_cert_w_path.c_str()) != 0) {
-            printf("Error: renaming ask_ark cert file\n");
             cmd_ret = SEV_RET_UNSUPPORTED;
             break;
         }
@@ -297,7 +287,7 @@ int SEVDevice::pek_csr(uint8_t *data, void *pek_mem, sev_cert *csr)
         // Verify the CSR complies to API specification
         memcpy(csr, (sev_cert*)data_buf->address, sizeof(sev_cert));
         SEVCert csr_obj(csr);
-        if (!csr_obj.verify_pek_csr()) {
+        if (csr_obj.verify_pek_csr() != STATUS_SUCCESS) {
             cmd_ret = SEV_RET_INVALID_CERTIFICATE;
             break;
         }
@@ -354,7 +344,7 @@ int SEVDevice::pek_csr_sign( sev_cert *pek_csr, const std::string oca_priv_key_f
 
     do {
         // Verify the CSR complies to API specification
-        if (!csr_obj.verify_pek_csr()) {
+        if (csr_obj.verify_pek_csr() != STATUS_SUCCESS) {
             cmd_ret = SEV_RET_INVALID_CERTIFICATE;
             break;
         }
@@ -376,9 +366,13 @@ int SEVDevice::pek_csr_sign( sev_cert *pek_csr, const std::string oca_priv_key_f
 
         // Sign the PEK CSR with the OCA private key
         SEVCert CSRCert(pek_csr);
-        CSRCert.sign_with_key(SEV_CERT_MAX_VERSION, SEV_USAGE_PEK, SEV_SIG_ALGO_ECDSA_SHA256,
-                              &oca_priv_key, SEV_USAGE_OCA, SEV_SIG_ALGO_ECDSA_SHA256);
-
+        if (!CSRCert.sign_with_key(SEV_CERT_MAX_VERSION, SEV_USAGE_PEK, SEV_SIG_ALGO_ECDSA_SHA256,
+                              &oca_priv_key, SEV_USAGE_OCA, SEV_SIG_ALGO_ECDSA_SHA256)){
+            printf("Error signing CSR with OCA key\n");
+            cmd_ret = SEV_RET_INVALID_CERTIFICATE;
+            break;
+        };
+        cmd_ret = SEV_RET_SUCCESS;
     } while (0);
 
     return (int)cmd_ret;
@@ -395,7 +389,7 @@ int SEVDevice::pek_cert_import(uint8_t *data, sev_cert *signed_pek_csr,
     do {
         // Verify signed CSR complies to API specification
         SEVCert cert_obj(signed_pek_csr);
-        if (cert_obj.verify_signed_pek_csr((const sev_cert *) &oca_cert) != STATUS_SUCCESS) {
+        if (cert_obj.verify_signed_pek_csr(oca_cert) != STATUS_SUCCESS) {
             cmd_ret = SEV_RET_INVALID_CERTIFICATE;
             break;
         }
@@ -1155,6 +1149,8 @@ int SEVDevice::set_externally_owned(const std::string oca_priv_key_file)
             // Sign the CSR
             sev_cert oca_cert;                             // Set by below call
             cmd_ret = pek_csr_sign(&PEKcsr, oca_priv_key_file, &oca_cert);
+						if (cmd_ret != SEV_RET_SUCCESS)
+                break;
 
             // Submit the signed cert to PEKCertImport
             sev_user_data_pek_cert_import pek_cert_import_data;

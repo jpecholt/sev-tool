@@ -779,6 +779,7 @@ int Command::package_secret(void)
 {
     int cmd_ret = ERROR_UNSUPPORTED;
     sev_hdr_buf packaged_secret_header;
+    std::string tmp_tk_file = m_output_folder + GUEST_TK_FILENAME;
     std::string secret_file = m_output_folder + SECRET_FILENAME;
     std::string pek_file = m_output_folder + PEK_FILENAME;
     std::string packaged_secret_file = m_output_folder + PACKAGED_SECRET_FILENAME;
@@ -810,7 +811,6 @@ int Command::package_secret(void)
             break;
 
         // Read in the unencrypted TK (TIK and TEK) created in build_session_buffer
-        std::string tmp_tk_file = m_output_folder + GUEST_TK_FILENAME;
         if (sev::read_file(tmp_tk_file, &m_tk, sizeof(m_tk)) != sizeof(m_tk)) {
             printf("Error reading in %s\n", tmp_tk_file.c_str());
             break;

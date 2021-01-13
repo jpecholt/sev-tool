@@ -59,8 +59,6 @@ const char help_array[] =  "The following commands are supported:\n" \
                     "      Input params:\n" \
                     "          uint32_t policy\n" \
                     "  package_secret\n" \
-                    "      Input params:\n" \
-                    "          launch_blob.txt file\n" \
                     "  sign_pek_csr\n" \
                     "      Input params:\n" \
                     "          pek_csr.cert file\n" \

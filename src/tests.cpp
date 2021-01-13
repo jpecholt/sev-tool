@@ -363,7 +363,7 @@ bool Tests::test_sign_pek_csr()
             break;
 
         // Check if signature is valid
-        if(!SignedCSR.verify_signed_pek_csr((const sev_cert*) &oca_cert))
+        if(SignedCSR.verify_signed_pek_csr((const sev_cert*) &oca_cert) != STATUS_SUCCESS)
             break;
         ret = true;
     } while (0);
