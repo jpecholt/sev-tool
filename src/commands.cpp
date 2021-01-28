@@ -572,7 +572,9 @@ int Command::calc_measurement(measurement_t *user_data)
         }
         if (m_output_folder != "") {     // Print the IDs to a text file
             std::string meas_path = m_output_folder+CALC_MEASUREMENT_FILENAME;
+            std::string meas_bin_path = m_output_folder+CALC_MEASUREMENT_BIN_FILENAME;
             sev::write_file(meas_path, (void *)meas_str.c_str(), meas_str.size());
+            sev::write_file(meas_bin_path, (void *)final_meas, sizeof(final_meas));
         }
     }
 
@@ -780,7 +782,7 @@ int Command::package_secret(void)
     int cmd_ret = ERROR_UNSUPPORTED;
     sev_hdr_buf packaged_secret_header;
     std::string tmp_tk_file = m_output_folder + GUEST_TK_FILENAME;
-    std::string measurement_file = m_output_folder + CALC_MEASUREMENT_FILENAME;
+    std::string measurement_file = m_output_folder + CALC_MEASUREMENT_BIN_FILENAME;
     std::string secret_file = m_output_folder + SECRET_FILENAME;
     std::string pek_file = m_output_folder + PEK_FILENAME;
     std::string packaged_secret_file = m_output_folder + PACKAGED_SECRET_FILENAME;
