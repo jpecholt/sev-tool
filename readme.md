@@ -124,11 +124,9 @@ Updated: 2019-10-03
 8. Run the pek_csr command to generate a certificate signing request for your PEK. This will allow you to take ownership of the platform.
 9. Run the sign_pek_csr command to sign with the OCA private key (hardware-independent), alternatively manually convert the public key into an AMD certificate and manually sign the CSR.
 10. Run the pek_cert_import command
-11. Run the pdh_cert_export command
-12. Run the get_ask_ark command
-13. Run the export_cert_chain command to export the PDH down to the ARK (AMD root) and zip it up
-14. Save the complete cert chain to send to the Guest Owners (GO's)
-15. Make available UEFI image for guests
+11. Run the export_cert_chain command to export the PDH down to the ARK (AMD root) and zip it up
+12. Save the complete cert chain to send to the Guest Owners (GO's)
+13. Make available UEFI image for guests
 
 ##### Guest Owner
 1. Make a folder for the SEV-Tool to import/export certs/IDs from/to (pass into commands with the --ofolder flag)
