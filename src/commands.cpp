@@ -780,6 +780,7 @@ int Command::package_secret(void)
     int cmd_ret = ERROR_UNSUPPORTED;
     sev_hdr_buf packaged_secret_header;
     std::string tmp_tk_file = m_output_folder + GUEST_TK_FILENAME;
+    std::string measurement_file = m_output_folder + CALC_MEASUREMENT_FILENAME;
     std::string secret_file = m_output_folder + SECRET_FILENAME;
     std::string pek_file = m_output_folder + PEK_FILENAME;
     std::string packaged_secret_file = m_output_folder + PACKAGED_SECRET_FILENAME;
@@ -797,8 +798,10 @@ int Command::package_secret(void)
             printf("Error: SEV requires a secret greater than 8 bytes\n");
             break;
         }
-        uint8_t secret_mem[secret_size];
-        uint8_t encrypted_mem[secret_size];
+        size_t padded_secret_size = (secret_size + 15) &~15;
+        uint8_t secret_mem[padded_secret_size];
+        uint8_t encrypted_mem[padded_secret_size];
+        memset((uint8_t *)&secret_mem +  secret_size, 0, padded_secret_size - secret_size);
 
         // Read in the secret
         // printf("Attempting to read in Secrets file\n");
@@ -817,7 +820,7 @@ int Command::package_secret(void)
         }
 
         // Encrypt the secret with the TEK
-        encrypt_with_tek(encrypted_mem, secret_mem, secret_size, iv);
+        encrypt_with_tek(encrypted_mem, secret_mem, padded_secret_size, iv);
 
         if (m_verbose_flag) {
             printf("Random IV\n");
@@ -828,14 +831,13 @@ int Command::package_secret(void)
         }
 
         // Read in the measurement, to be used as part of the launch secret header hmac
-        std::string measurement_file = m_output_folder + CALC_MEASUREMENT_FILENAME;
         if (sev::read_file(measurement_file, &m_measurement, sizeof(m_measurement)) != sizeof(m_measurement)) {
             printf("Error reading in %s\n", measurement_file.c_str());
             break;
         }
 
         // Write the encrypted secret to a file
-        sev::write_file(packaged_secret_file, encrypted_mem, secret_size);
+        sev::write_file(packaged_secret_file, encrypted_mem, padded_secret_size);
 
         // Set up the Launch_Secret packet header
         if (!create_launch_secret_header(&packaged_secret_header, &iv, encrypted_mem,
