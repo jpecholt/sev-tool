@@ -118,7 +118,7 @@ int SEVDevice::pek_cert_import(uint8_t *data,
 
 // todo. dont want to be reading from a file. use openssl to generate
 int SEVDevice::pek_csr_sign( sev_cert *pek_csr,
-                             std::string &oca_priv_key_file,
+                             const std::string oca_priv_key_file,
                              sev_cert *oca_cert_out)
 {
     int cmd_ret = -1;

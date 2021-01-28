@@ -163,7 +163,7 @@ Updated: 2019-10-03
 This is the flow that the Hypervisor will take to prepare the guest
 1. After receiving the launch blob and the GO Diffie-Hellman public key from the Guest Owner, the Hypervisor can launch (call Launch_Start on) the guest
 2. Call Launch_Update_Data and Activate, etc
-3. Call Launch_Measure and send the measurement received from the PSP to the Guest Owner so it can verify against its expected result. See [qmp](https://www.qemu.org/docs/master/interop/qemu-qmp-ref.html) and `query-sev-launch-measure` on how to obtain the launch measure.
+3. Call Launch_Measure and send the measurement received from the PSP to the Guest Owner so it can verify against its expected result
 4. Call Launch_Finish, etc
 5. After receiving the packaged secrets from the Guest Owner (this step is optional), call Launch_Secret to pass the Guest Owner's secrets into the guest
 6. The Guest Owner should now give the Hypervisor approval to run its Guest
@@ -308,7 +308,7 @@ This command calls the get_id command and passes that ID into the AMD KDS server
      - Optional input args: --ofolder [folder_path]
          - This allows the user to specify the folder where the tool will export the calculated measurement
      - Outputs:
-         - The calculated measurement matches the measure of the launch_measure command (see above) if the same settings were used.  
+         - The calculated measurement matches the measure of the launch_measure command (see above) if the same settings were used.
          - If --[verbose] flag used: The input data and calculated measurement will be printed out to the screen
          - If --[ofolder] flag used: The calculated measurement will be written to the specified folder. File: calc_measurement_out.txt
      - Example
@@ -382,6 +382,7 @@ This command calls the get_id command and passes that ID into the AMD KDS server
        - pek_csr.signed.cert: The signed CSR containing the OCA signature but still missing the PEK signature.
     - Example
         ```sh
+        $ sudo ./sevtool --sign_pek_csr [pek_csr.cert] [oca_priv_ley]
         $ sudo ./sevtool --sign_pek_csr pek_csr.cert oca_priv.pem
         ```
 
