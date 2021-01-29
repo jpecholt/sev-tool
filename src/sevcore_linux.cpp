@@ -87,8 +87,7 @@ int sev::get_ask_ark(const std::string output_folder, const std::string cert_fil
     std::string cert_w_path = "";
 
     do {
-        cmd += "-P " + output_folder + " ";
-        cmd += "-O " + cert_file + " ";
+        cmd += "-O " + output_folder + cert_file + " ";
         cert_w_path = output_folder + cert_file;
 
         // Don't re-download the CEK from the KDS server if you already have it
